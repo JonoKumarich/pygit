@@ -37,6 +37,17 @@ def hash_object(
 
     commands.hash_object(file, write)
 
+@app.command()
+def ls_tree(
+        sha: str,
+        name_only: Annotated[bool, typer.Option("--name-only", help="List only filenames (instead of the \"long\" output), one per line.")] = False
+    ):
+
+    if not name_only:
+        raise NotImplementedError("Currently only name-only supported")
+
+    commands.ls_tree(sha)
+
 
 def main():
     app()
