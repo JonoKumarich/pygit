@@ -1,6 +1,3 @@
-import os
-from pathlib import Path
-import shutil
 from typing_extensions import Annotated
 from typing import Optional
 
@@ -13,7 +10,7 @@ app = typer.Typer()
 
 
 @app.command()
-def init(dry_run: bool = False):
+def init():
     commands.init()
 
 @app.command()
@@ -31,6 +28,14 @@ def cat_file(
         raise NotImplementedError("Currently only -p supported")
 
     commands.cat_file(sha)
+
+@app.command()
+def hash_object(
+        file: str,
+        write: Annotated[bool, typer.Option("--write", "-w", help="Actually write the object into the object database.")] = False
+    ):
+
+    commands.hash_object(file, write)
 
 
 def main():

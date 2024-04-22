@@ -18,6 +18,7 @@ def cat_file(sha: str):
     folder_name = Path(".git") / "objects" / sha[0:2]
 
     # TODO: This currently holds the whole file in memory. We should probably stream the decode.
+    # don't we kinda need to have everything in mem to print it out though?
     with open(folder_name / sha[2:], 'rb') as file:
         decoded = zlib.decompress(file.read())
 
