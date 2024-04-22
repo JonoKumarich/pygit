@@ -1,7 +1,6 @@
 from pathlib import Path
 import zlib
 from enum import Enum
-from dataclasses import dataclass
 
 
 class ObjectKind(Enum):

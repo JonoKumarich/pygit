@@ -48,6 +48,10 @@ def ls_tree(
 
     commands.ls_tree(sha)
 
+@app.command()
+def write_tree():
+    commands.write_tree()
+
 
 def main():
     app()
