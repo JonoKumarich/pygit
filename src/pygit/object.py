@@ -2,8 +2,11 @@ from pathlib import Path
 import zlib
 from enum import Enum
 from hashlib import sha1
-from typing import Self
+from typing import Optional, Self
 import os
+import datetime
+
+from pygit.config import GitConfig
 
 
 class Kind(Enum):
@@ -31,10 +34,10 @@ class Object:
         return sha1(self.content()).digest()
 
     def cat(self) -> str:
-        return self.body.decode()[:-1]
+        return self.body.decode().strip()
 
     def write(self) -> None:
-        compressed = zlib.compress(self.content())
+        compressed = zlib.compress(self.content()).strip()
         sha = self.sha().hex()
         output_file = Path(".git") / "objects" / sha[:2] / sha[2:]
 
@@ -129,7 +132,30 @@ class Tree(Object):
 
         current_tree = cls(body=body, kind=Kind.TREE)
         current_tree.write()
-        print(root, current_tree.sha().hex(), current_tree.content())
 
         return current_tree
+
+
+class Commit(Object):
+    def __init__(self, body: bytes, kind: Kind) -> None:
+        super().__init__(body, kind)
+
+    @classmethod
+    def from_tree(cls, tree: str, message: str, parent: Optional[str] = None) -> Self:
+        config = GitConfig.source()
+        now = datetime.datetime.now(datetime.timezone.utc).astimezone()
+        timestamp = int(now.timestamp())
+        timezone = now.strftime('%z')
+        parent_str = f"parent {parent}\n" if parent is not None else ""
+
+        body = (
+            f"tree {tree}"
+            f"\n{parent_str}"
+            f"author {config.name} <{config.email}> {timestamp} {timezone}\n"
+            f"committer {config.name} <{config.email}> {timestamp} {timezone}\n\n"
+            f"{message}"
+        )
+
+        return cls(body=body.encode(), kind=Kind.COMMIT)
+        
 

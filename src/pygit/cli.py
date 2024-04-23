@@ -55,6 +55,15 @@ def ls_tree(
 def write_tree():
     commands.write_tree()
 
+@app.command()
+def commit_tree(
+        sha: str,
+        message: Annotated[str, typer.Option("--message", "-m", help="A paragraph in the commit log message.")],
+        parent: Annotated[Optional[str], typer.Option("--parent", "-p", help="The 40 char sha of the parent commit")] = None,
+    ):
+
+    commands.commit_tree(sha, message, parent)
+
 
 def main():
     app()

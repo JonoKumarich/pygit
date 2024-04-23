@@ -1,8 +1,9 @@
 from pathlib import Path
 import os
 import shutil
+from typing import Optional
 
-from pygit.object import Object, Tree
+from pygit.object import Commit, Object, Tree
 
 def init() -> None:
     home_path = Path(".git")
@@ -26,9 +27,9 @@ def hash_object(file: str | Path, write: bool) -> str:
     if write:
         blob.write()
 
-    sha = blob.sha()
+    sha = blob.sha().hex()
     print(sha)
-    return sha.hex()
+    return sha
 
 
 def cat_file(sha: str) -> str:
@@ -45,10 +46,19 @@ def ls_tree(sha: str) -> str:
     print(files)
     return files
 
+
 def write_tree() -> str:
     tree = Tree.from_path()
     tree.write()
     sha = tree.sha().hex()
+    print(sha)
+    return sha
+
+
+def commit_tree(sha: str, message: str, parent: Optional[str]) -> str:
+    commit = Commit.from_tree(sha, message, parent)
+    commit.write()
+    sha = commit.sha().hex()
     print(sha)
     return sha
 
