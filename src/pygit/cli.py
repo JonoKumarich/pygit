@@ -5,7 +5,6 @@ import typer
 
 from pygit import commands
 
-
 app = typer.Typer()
 
 
@@ -48,9 +47,9 @@ def ls_tree(
 
     commands.ls_tree(sha)
 
-@app.command()
-def write_tree():
-    commands.write_tree()
+# @app.command()
+# def write_tree():
+#     commands.write_tree()
 
 
 def main():
