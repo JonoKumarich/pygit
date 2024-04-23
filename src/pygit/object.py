@@ -3,6 +3,7 @@ import zlib
 from enum import Enum
 from hashlib import sha1
 from typing import Self
+import os
 
 
 class Kind(Enum):
@@ -26,19 +27,25 @@ class Object:
     def content(self) -> bytes:
         return self.header() + b'\x00' + self.body
 
-    def sha(self) -> str:
-        return sha1(self.content()).hexdigest()
+    def sha(self) -> bytes:
+        return sha1(self.content()).digest()
 
     def cat(self) -> str:
         return self.body.decode()[:-1]
 
     def write(self) -> None:
         compressed = zlib.compress(self.content())
-        sha = self.sha()
+        sha = self.sha().hex()
         output_file = Path(".git") / "objects" / sha[:2] / sha[2:]
+
+        # Had some permission issues with python where it couldn't overwrite the files, so we just rm them instead
+        try:
+            os.remove(output_file)
+        except OSError:
+            pass
+
         output_file.parent.mkdir(exist_ok=True, parents=True)
         output_file.write_bytes(compressed)
-
 
     @classmethod
     def from_git(cls, sha: str) -> Self:
@@ -57,7 +64,9 @@ class Object:
     @classmethod
     def from_bytes(cls, input: bytes) -> Self:
         header, body = input.split(b'\x00', 1)
-        kind, _ = header.split(b' ', 1)
+        kind, size = header.split(b' ', 1)
+
+        assert int(size) == len(body), f"fatal: too-short {kind.decode()} object"
 
         return cls(body, Kind[kind.decode().upper()])
 
@@ -92,4 +101,35 @@ class Tree(Object):
 
         return '\n'.join(files)
 
+    @classmethod
+    def from_path(cls, root: Path = Path('.')) -> Self:
+        dirs = sorted(os.listdir(root))
+        body = b''
+
+        for name in dirs:
+            # TODO: Apply the gitignore exclusions properly. Currently hardcoded
+            if name in ['.git', 'venv', '.python-version', 'test', 'venv', '__pycache__', 'pygit.egg-info']:
+                continue
+
+            dir = root / name
+            if os.path.isdir(dir):
+                mode = '40000'
+                next_tree = Tree.from_path(dir)
+                sha = next_tree.sha()
+            else:
+                # FIXME: This is duplicate of hash_object, which was causing a circular import
+                blob = Object.from_file(dir)
+                blob.write()
+                sha = blob.sha()
+                mode = str(oct(os.stat(dir).st_mode))[2:]
+
+            body += f'{mode} {name}'.encode()
+            body += b'\x00'
+            body += sha
+
+        current_tree = cls(body=body, kind=Kind.TREE)
+        current_tree.write()
+        print(root, current_tree.sha().hex(), current_tree.content())
+
+        return current_tree
 

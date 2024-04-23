@@ -12,6 +12,7 @@ app = typer.Typer()
 def init():
     commands.init()
 
+
 @app.command()
 def cat_file(
     sha: str, 
@@ -28,6 +29,7 @@ def cat_file(
 
     commands.cat_file(sha)
 
+
 @app.command()
 def hash_object(
         file: str,
@@ -35,6 +37,7 @@ def hash_object(
     ):
 
     commands.hash_object(file, write)
+
 
 @app.command()
 def ls_tree(
@@ -47,9 +50,10 @@ def ls_tree(
 
     commands.ls_tree(sha)
 
-# @app.command()
-# def write_tree():
-#     commands.write_tree()
+
+@app.command()
+def write_tree():
+    commands.write_tree()
 
 
 def main():

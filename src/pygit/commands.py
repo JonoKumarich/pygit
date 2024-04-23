@@ -2,7 +2,7 @@ from pathlib import Path
 import os
 import shutil
 
-from pygit.object import Object, Kind, Tree
+from pygit.object import Object, Tree
 
 def init() -> None:
     home_path = Path(".git")
@@ -19,27 +19,36 @@ def init() -> None:
         f.write("ref: refs/heads/main\n")
 
 
-def hash_object(file: str | Path, write: bool) -> None:
+def hash_object(file: str | Path, write: bool) -> str:
 
     blob = Object.from_file(file)
 
     if write:
         blob.write()
 
-    print(blob.sha())
+    sha = blob.sha()
+    print(sha)
+    return sha.hex()
 
 
-def cat_file(sha: str) -> None:
+def cat_file(sha: str) -> str:
 
     file = Object.from_git(sha)
     output = file.cat()
     print(output)
+    return output
 
 
-def ls_tree(sha: str) -> None:
+def ls_tree(sha: str) -> str:
     tree = Tree.from_git(sha)
-    print(tree.list_files())
+    files = tree.list_files()
+    print(files)
+    return files
 
+def write_tree() -> str:
+    tree = Tree.from_path()
+    tree.write()
+    sha = tree.sha().hex()
+    print(sha)
+    return sha
 
-
-    
