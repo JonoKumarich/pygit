@@ -5,6 +5,7 @@ from typing import Optional
 
 from pygit.object import Commit, Object, Tree
 
+
 def init() -> None:
     home_path = Path(".git")
 
@@ -27,7 +28,7 @@ def hash_object(file: str | Path, write: bool) -> str:
     if write:
         blob.write()
 
-    sha = blob.sha().hex()
+    sha = blob.sha.hex()
     print(sha)
     return sha
 
@@ -35,7 +36,7 @@ def hash_object(file: str | Path, write: bool) -> str:
 def cat_file(sha: str) -> str:
 
     file = Object.from_git(sha)
-    output = file.cat()
+    output = file.cat
     print(output)
     return output
 
@@ -50,7 +51,7 @@ def ls_tree(sha: str) -> str:
 def write_tree() -> str:
     tree = Tree.from_path()
     tree.write()
-    sha = tree.sha().hex()
+    sha = tree.sha.hex()
     print(sha)
     return sha
 
@@ -58,7 +59,10 @@ def write_tree() -> str:
 def commit_tree(sha: str, message: str, parent: Optional[str]) -> str:
     commit = Commit.from_tree(sha, message, parent)
     commit.write()
-    sha = commit.sha().hex()
+    sha = commit.sha.hex()
     print(sha)
     return sha
 
+def clone(url: str) -> str:
+    raise NotImplementedError
+    

@@ -5,6 +5,7 @@ from hashlib import sha1
 from typing import Optional, Self
 import os
 import datetime
+from functools import cached_property
 
 from pygit.config import GitConfig
 
@@ -21,24 +22,29 @@ class Object:
         self.body = body
         self.kind = kind
         
+    @cached_property
     def size(self) -> int:
         return len(self.body)
 
+    @cached_property
     def header(self) -> bytes:
-        return f"{self.kind.value} {self.size()}".encode()
+        return f"{self.kind.value} {self.size}".encode()
 
+    @cached_property
     def content(self) -> bytes:
-        return self.header() + b'\x00' + self.body
+        return self.header + b'\x00' + self.body
 
+    @cached_property
     def sha(self) -> bytes:
-        return sha1(self.content()).digest()
+        return sha1(self.content).digest()
 
+    @cached_property
     def cat(self) -> str:
         return self.body.decode().strip()
 
     def write(self) -> None:
-        compressed = zlib.compress(self.content()).strip()
-        sha = self.sha().hex()
+        compressed = zlib.compress(self.content).strip()
+        sha = self.sha.hex()
         output_file = Path(".git") / "objects" / sha[:2] / sha[2:]
 
         # Had some permission issues with python where it couldn't overwrite the files, so we just rm them instead

@@ -2,7 +2,6 @@ from dataclasses import dataclass
 import configparser
 from typing import Self
 from pathlib import Path
-from datetime import datetime
 
 
 @dataclass

@@ -1,3 +1,6 @@
 .python-version
 venv/
 test/
+clone_log.txt
+test.txt
+notes.md
