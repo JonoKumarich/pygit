@@ -1,6 +1,6 @@
-from pathlib import Path
 import os
 import shutil
+from pathlib import Path
 from typing import Optional
 
 from pygit.object import Commit, Object, Tree
@@ -12,12 +12,12 @@ def init() -> None:
     test_path_exists = os.path.exists(home_path) and os.path.isdir(home_path)
     if test_path_exists:
         shutil.rmtree(home_path)
-    
+
     os.mkdir(home_path)
     os.mkdir(home_path / "objects")
     os.mkdir(home_path / "refs")
 
-    with open(home_path / "HEAD", 'x') as f:
+    with open(home_path / "HEAD", "x") as f:
         f.write("ref: refs/heads/main\n")
 
 
@@ -63,6 +63,20 @@ def commit_tree(sha: str, message: str, parent: Optional[str]) -> str:
     print(sha)
     return sha
 
+
+def commit(message: str) -> str:
+    sha = write_tree()
+
+    # TODO: Move this to its own function
+    with open(Path(".git") / "HEAD", "r") as f:
+        ref_path = f.read().split()[1]
+
+    with open(Path(".git") / ref_path, "r") as f:
+        parent = f.read().strip()
+
+    print(parent)
+    return commit_tree(sha, message, parent)
+
+
 def clone(url: str) -> str:
     raise NotImplementedError
-    

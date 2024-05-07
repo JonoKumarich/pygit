@@ -1,11 +1,11 @@
-from pathlib import Path
+import datetime
+import os
 import zlib
 from enum import Enum
-from hashlib import sha1
-from typing import Optional, Self
-import os
-import datetime
 from functools import cached_property
+from hashlib import sha1
+from pathlib import Path
+from typing import Optional, Self
 
 from pygit.config import GitConfig
 
@@ -17,11 +17,10 @@ class Kind(Enum):
 
 
 class Object:
-    # TODO: When to property vs method
     def __init__(self, body: bytes, kind: Kind) -> None:
         self.body = body
         self.kind = kind
-        
+
     @cached_property
     def size(self) -> int:
         return len(self.body)
@@ -32,7 +31,7 @@ class Object:
 
     @cached_property
     def content(self) -> bytes:
-        return self.header + b'\x00' + self.body
+        return self.header + b"\x00" + self.body
 
     @cached_property
     def sha(self) -> bytes:
@@ -65,15 +64,15 @@ class Object:
 
         # TODO: This currently holds the whole file in memory. We should probably stream the decode.
         # don't we kinda need to have everything in mem to print it out though?
-        with open(folder_name / sha[2:], 'rb') as file:
+        with open(folder_name / sha[2:], "rb") as file:
             decoded = zlib.decompress(file.read())
 
         return cls.from_bytes(decoded)
 
     @classmethod
     def from_bytes(cls, input: bytes) -> Self:
-        header, body = input.split(b'\x00', 1)
-        kind, size = header.split(b' ', 1)
+        header, body = input.split(b"\x00", 1)
+        kind, size = header.split(b" ", 1)
 
         assert int(size) == len(body), f"fatal: too-short {kind.decode()} object"
 
@@ -82,10 +81,11 @@ class Object:
     @classmethod
     def from_file(cls, path: str | Path) -> Self:
         # TODO: We should stream this through instead of reading all into memory
-        with open(path, 'r') as f:
-            contents = f.read().encode('utf-8')
+        with open(path, "r") as f:
+            contents = f.read().encode("utf-8")
 
         return cls(contents, Kind.BLOB)
+
 
 class Tree(Object):
     def __init__(self, body: bytes, kind: Kind) -> None:
@@ -96,33 +96,41 @@ class Tree(Object):
         files = []
 
         while True:
-            next_null = content.find(b'\x00')
-            file_code_length = content.find(b' ')
+            next_null = content.find(b"\x00")
+            file_code_length = content.find(b" ")
             if next_null == -1:
                 break
 
-            item_content = content[:next_null+21]
-            content = content[next_null+21:]
+            item_content = content[: next_null + 21]
+            content = content[next_null + 21 :]
 
-            file_name = item_content[file_code_length+1:next_null].decode()
+            file_name = item_content[file_code_length + 1 : next_null].decode()
 
             files.append(file_name)
 
-        return '\n'.join(files)
+        return "\n".join(files)
 
     @classmethod
-    def from_path(cls, root: Path = Path('.')) -> Self:
+    def from_path(cls, root: Path = Path(".")) -> Self:
         dirs = sorted(os.listdir(root))
-        body = b''
+        body = b""
 
         for name in dirs:
             # TODO: Apply the gitignore exclusions properly. Currently hardcoded
-            if name in ['.git', 'venv', '.python-version', 'test', 'venv', '__pycache__', 'pygit.egg-info']:
+            if name in [
+                ".git",
+                "venv",
+                ".python-version",
+                "test",
+                "venv",
+                "__pycache__",
+                "pygit.egg-info",
+            ]:
                 continue
 
             dir = root / name
             if os.path.isdir(dir):
-                mode = '40000'
+                mode = "40000"
                 next_tree = Tree.from_path(dir)
                 sha = next_tree.sha()
             else:
@@ -132,8 +140,8 @@ class Tree(Object):
                 sha = blob.sha()
                 mode = str(oct(os.stat(dir).st_mode))[2:]
 
-            body += f'{mode} {name}'.encode()
-            body += b'\x00'
+            body += f"{mode} {name}".encode()
+            body += b"\x00"
             body += sha
 
         current_tree = cls(body=body, kind=Kind.TREE)
@@ -151,7 +159,7 @@ class Commit(Object):
         config = GitConfig.source()
         now = datetime.datetime.now(datetime.timezone.utc).astimezone()
         timestamp = int(now.timestamp())
-        timezone = now.strftime('%z')
+        timezone = now.strftime("%z")
         parent_str = f"parent {parent}\n" if parent is not None else ""
 
         body = (
@@ -163,5 +171,3 @@ class Commit(Object):
         )
 
         return cls(body=body.encode(), kind=Kind.COMMIT)
-        
-
