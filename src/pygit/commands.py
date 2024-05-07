@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
+from pygit import utils
 from pygit.object import Commit, Object, Tree
 
 
@@ -16,6 +17,7 @@ def init() -> None:
     os.mkdir(home_path)
     os.mkdir(home_path / "objects")
     os.mkdir(home_path / "refs")
+    os.mkdir(home_path / "refs" / "heads")
 
     with open(home_path / "HEAD", "x") as f:
         f.write("ref: refs/heads/main\n")
@@ -67,15 +69,29 @@ def commit_tree(sha: str, message: str, parent: Optional[str]) -> str:
 def commit(message: str) -> str:
     sha = write_tree()
 
-    # TODO: Move this to its own function
-    with open(Path(".git") / "HEAD", "r") as f:
-        ref_path = f.read().split()[1]
+    ref_path = utils.head_ref()
+    parent = utils.ref_sha(ref_path)
 
-    with open(Path(".git") / ref_path, "r") as f:
-        parent = f.read().strip()
+    commit_sha = commit_tree(sha, message, parent)
 
-    print(parent)
-    return commit_tree(sha, message, parent)
+    with open(Path(".git") / ref_path, "w") as f:
+        f.write(commit_sha)
+
+    return commit_sha
+
+
+def branch(name: str) -> None:
+    ref_path = utils.head_ref()
+    commit_sha = utils.ref_sha(ref_path)
+
+    with open(Path(".git") / "refs" / "heads" / name, "w") as f:
+        f.write(commit_sha)
+
+
+def checkout(branch: str) -> None:
+    new_head = f"ref: refs/head/{branch}"
+    with open(Path(".git") / "HEAD", "w") as f:
+        f.write(new_head)
 
 
 def clone(url: str) -> str:

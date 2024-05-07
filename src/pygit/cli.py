@@ -99,6 +99,16 @@ def commit(
 
 
 @app.command()
+def checkout(branch: str):
+    commands.checkout(branch)
+
+
+@app.command()
+def branch(name: str):
+    commands.branch(name)
+
+
+@app.command()
 def clone(url: str):
     commands.clone(url)
 
