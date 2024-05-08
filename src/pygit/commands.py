@@ -10,10 +10,6 @@ from pygit.object import Commit, Object, Tree
 def init() -> None:
     home_path = Path(".git")
 
-    test_path_exists = os.path.exists(home_path) and os.path.isdir(home_path)
-    if test_path_exists:
-        shutil.rmtree(home_path)
-
     os.mkdir(home_path)
     os.mkdir(home_path / "objects")
     os.mkdir(home_path / "refs")
@@ -92,6 +88,12 @@ def checkout(branch: str) -> None:
     new_head = f"ref: refs/head/{branch}"
     with open(Path(".git") / "HEAD", "w") as f:
         f.write(new_head)
+
+
+def merge(branch: str) -> None:
+    # TODO:
+    # I think I will only handle fast-forward merges for now
+    raise NotImplementedError
 
 
 def clone(url: str) -> str:
