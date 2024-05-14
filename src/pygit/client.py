@@ -36,6 +36,14 @@ class Client:
 
     def __init__(self, packet_lines: list[PktLineRecord]) -> None:
         self.packet_lines = packet_lines
+        self.advertised = set(
+            packet.payload.split(maxsplit=1)[0]
+            for packet in packet_lines
+            if packet.payload is not None
+        )
+        self.common = set()
+        self.want = self.advertised
+        self.c_pening = []  # TODO: figure out what this is for
 
     @classmethod
     def ref_discovery(cls, author: str, repo: str) -> Self:
@@ -60,7 +68,6 @@ class Client:
             ), f"Request status returned: {response.status}. Must be 200 or 304"
 
             packet_lines = response.read().splitlines()
-            print(packet_lines)
 
             # Clients MUST validate the first five bytes of the response entity matches the regex `^[0-9a-f]{4}#`
             # If this test fails, clients MUST NOT continue.
@@ -81,23 +88,39 @@ class Client:
 
             return cls([PktLineRecord.from_bytes(line) for line in packet_lines[2:]])
 
+    def compute(self) -> bytes:
+
+        body = b""
+
+        for want in self.want:
+            body += b"0032want " + want + b"\n"
+
+        for common in self.common:
+            body += b"0032have " + common + b"\n"
+
+        COMMIT_LIMIT = 32
+        for _ in range(COMMIT_LIMIT):
+            if len(self.c_pening) == 0:
+                break
+
+            have = self.c_pening.pop(0)
+            body += b"0032have " + have + b"\n"
+
+        body += b"0000"
+        body += b"0009done\n"
+
+        headers = {"Content-Type": "application/x-git-upload-pack-request"}
+        url = "https://github.com/JonoKumarich/pygit/git-upload-pack"
+        req = request.Request(url, data=body, method="POST", headers=headers)
+        response = request.urlopen(req)
+
+        assert response.status == 200, "Compute request response status != 200"
+
+        return response.read()
+
 
 if __name__ == "__main__":
     client = Client.ref_discovery("JonoKumarich", "pygit")
 
-    data = (
-        # b"0077want 2c103af8723ff4dad8ee951a7ede04807fecc44d multi_ack_detailed side-band-64k thin-pack ofs-delta agent=git/1.8.2\n"
-        b"0032want 2c103af8723ff4dad8ee951a7ede04807fecc44d\n"
-        b"0032want aa94abbbaaecc6113f53c976cd6cf6552b248c24\n"
-        b"0000"
-        b"0009done\n"
-    )
-
-    url = "https://github.com/JonoKumarich/pygit/git-upload-pack"
-    headers = {"Content-Type": "application/x-git-upload-pack-request"}
-
-    req = request.Request(url, data=data, method="POST", headers=headers)
-    response = request.urlopen(req)
-
-    print(response.status)
-    print(response.read())
+    val = client.compute()
+    print(val)
