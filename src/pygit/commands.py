@@ -91,10 +91,13 @@ def checkout(branch: str) -> None:
 
 
 def merge(branch: str) -> None:
-    # TODO:
-    # I think I will only handle fast-forward merges for now
+    # NOTE: We only handle fast-forward merges for now
+
+    commit
+
     raise NotImplementedError
 
 
 def clone(url: str) -> str:
+    # TODO: We currently only handle git clone through http. I want to add functionality for ssh, and git protocol
     raise NotImplementedError
