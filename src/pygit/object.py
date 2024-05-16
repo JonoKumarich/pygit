@@ -132,12 +132,12 @@ class Tree(Object):
             if os.path.isdir(dir):
                 mode = "40000"
                 next_tree = Tree.from_path(dir)
-                sha = next_tree.sha()
+                sha = next_tree.sha
             else:
                 # FIXME: This is duplicate of hash_object, which was causing a circular import
                 blob = Object.from_file(dir)
                 blob.write()
-                sha = blob.sha()
+                sha = blob.sha
                 mode = str(oct(os.stat(dir).st_mode))[2:]
 
             body += f"{mode} {name}".encode()

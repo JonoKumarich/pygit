@@ -1,7 +1,8 @@
 import re
+import zlib
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Optional, Self
+from typing import IO, Optional, Self
 from urllib import parse, request
 
 
@@ -43,7 +44,7 @@ class Client:
         )
         self.common = set()
         self.want = self.advertised
-        self.c_pening = []  # TODO: figure out what this is for
+        self.c_pening = []
 
     @classmethod
     def ref_discovery(cls, author: str, repo: str) -> Self:
@@ -88,9 +89,12 @@ class Client:
 
             return cls([PktLineRecord.from_bytes(line) for line in packet_lines[2:]])
 
-    def compute(self) -> bytes:
+    def compute(self) -> IO[bytes]:
 
         body = b""
+
+        # Sets some additional info up the top
+        # body += b"0054want 2c103af8723ff4dad8ee951a7ede04807fecc44d multi_ack side-band-64k ofs-delta\n"
 
         for want in self.want:
             body += b"0032want " + want + b"\n"
@@ -109,6 +113,9 @@ class Client:
         body += b"0000"
         body += b"0009done\n"
 
+        # TODO: Currently, there is no packfile negotiation, just simply a packfile request. (Will need to negotiate properly when using git fetch)
+        # https://github.com/git/git/blob/795ea8776befc95ea2becd8020c7a284677b4161/Documentation/gitprotocol-pack.txt#L241
+
         headers = {"Content-Type": "application/x-git-upload-pack-request"}
         url = "https://github.com/JonoKumarich/pygit/git-upload-pack"
         req = request.Request(url, data=body, method="POST", headers=headers)
@@ -116,11 +123,4 @@ class Client:
 
         assert response.status == 200, "Compute request response status != 200"
 
-        return response.read()
-
-
-if __name__ == "__main__":
-    client = Client.ref_discovery("JonoKumarich", "pygit")
-
-    val = client.compute()
-    print(val)
+        return response

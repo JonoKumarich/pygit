@@ -1,7 +1,7 @@
-from dataclasses import dataclass
 import configparser
-from typing import Self
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Self
 
 
 @dataclass
@@ -13,11 +13,10 @@ class GitConfig:
     def source(cls) -> Self:
         config = configparser.ConfigParser()
         # TODO: At the moment this is the only possible path for config vars. We should add the others
-        config.read(Path.home() / '.config/git/config')
+        config.read(Path.home() / ".config/git/config")
 
-        assert 'user' in config, "'user' field must be set in git config"
-        assert 'name' in config['user'], "'user.name' field must set in git config"
-        assert 'email' in config['user'], "'user.email' field must set in git config"
+        assert "user" in config, "'user' field must be set in git config"
+        assert "name" in config["user"], "'user.name' field must set in git config"
+        assert "email" in config["user"], "'user.email' field must set in git config"
 
-        return cls(name=config['user']['name'], email=config['user']['email'])
-
+        return cls(name=config["user"]["name"], email=config["user"]["email"])

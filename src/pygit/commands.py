@@ -91,9 +91,7 @@ def checkout(branch: str) -> None:
 
 
 def merge(branch: str) -> None:
-    # NOTE: We only handle fast-forward merges for now
-
-    commit
+    # NOTE: We will only handle fast-forward merges for now
 
     raise NotImplementedError
 
